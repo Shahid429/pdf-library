@@ -2,29 +2,35 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Book Title</title>
+  <title>My Book – All Pages</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
   <style>
-    body { margin: 0; }
-    #pdf-canvas { width: 100%; height: 100vh; }
+    body { margin: 0; padding: 1em; }
+    canvas { display: block; margin: 1em auto; border: 1px solid #ccc; }
   </style>
 </head>
 <body>
-  <canvas id="pdf-canvas"></canvas>
+  <div id="pdf-container"></div>
   <script>
-    const url = 'Artificial Intelligence and Human Rights.pdf'; // Replace with your PDF file name
-    const canvas = document.getElementById('pdf-canvas');
-    const ctx = canvas.getContext('2d');
+    const url = 'Artificial%20Intelligence%20and%20Human%20Rights.pdf';
+    const container = document.getElementById('pdf-container');
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
 
     pdfjsLib.getDocument(url).promise.then(pdf => {
-      pdf.getPage(1).then(page => {
-        const viewport = page.getViewport({ scale: 1.5 });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        page.render({ canvasContext: ctx, viewport });
-      });
+      // Loop through all pages
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        pdf.getPage(pageNum).then(page => {
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement('canvas');
+          const ctx    = canvas.getContext('2d');
+          canvas.width  = viewport.width;
+          canvas.height = viewport.height;
+          container.appendChild(canvas);
+          page.render({ canvasContext: ctx, viewport });
+        });
+      }
     });
   </script>
 </body>
