@@ -2,34 +2,90 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>My Book – All Pages</title>
+  <title>PDF Viewer</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
   <style>
-    body { margin: 0; padding: 1em; }
-    canvas { display: block; margin: 1em auto; border: 1px solid #ccc; }
+    body {
+      margin: 0;
+      padding: 1em;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    canvas {
+      display: block;
+      margin: 1em auto;
+      border: 1px solid #ccc;
+    }
+    #controls {
+      text-align: center;
+      margin-bottom: 1em;
+    }
+    #controls button {
+      font-size: 1.2em;
+      margin: 0 0.5em;
+    }
   </style>
 </head>
 <body>
+  <div id="controls">
+    <button onclick="zoomOut()">−</button>
+    <button onclick="zoomIn()">+</button>
+  </div>
   <div id="pdf-container"></div>
+
   <script>
     const url = 'Artificial%20Intelligence%20and%20Human%20Rights.pdf';
     const container = document.getElementById('pdf-container');
+    let pdfDoc = null;
+    let scale = 1.0;
 
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.worker.min.js';
 
     pdfjsLib.getDocument(url).promise.then(pdf => {
-      // Loop through all pages
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        pdf.getPage(pageNum).then(page => {
-          const viewport = page.getViewport({ scale: 1.5 });
+      pdfDoc = pdf;
+      renderPages();
+    });
+
+    function renderPages() {
+      container.innerHTML = '';
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        pdfDoc.getPage(pageNum).then(page => {
+          const viewport = page.getViewport({ scale: scale });
           const canvas = document.createElement('canvas');
-          const ctx    = canvas.getContext('2d');
-          canvas.width  = viewport.width;
+          const ctx = canvas.getContext('2d');
+          canvas.width = viewport.width;
           canvas.height = viewport.height;
           container.appendChild(canvas);
-          page.render({ canvasContext: ctx, viewport });
+          page.render({ canvasContext: ctx, viewport: viewport });
         });
+      }
+    }
+
+    function zoomIn() {
+      scale += 0.1;
+      renderPages();
+    }
+
+    function zoomOut() {
+      if (scale > 0.2) {
+        scale -= 0.1;
+        renderPages();
+      }
+    }
+
+    // Disable context menu
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    // Disable copy and print keyboard shortcuts
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'x' || e.key === 'p')) {
+        e.preventDefault();
+        alert('This action is disabled for this document.');
       }
     });
   </script>
